@@ -91,13 +91,19 @@
             border-radius: 50%;
             border: 4px solid rgba(255, 255, 255, 0.9);
             background-repeat: no-repeat;
-            box-shadow: 
+            box-shadow:
                 0 20px 40px -10px rgba(0,0,0,0.4),
                 inset 0 0 15px rgba(255,255,255,0.4);
             z-index: 100; /* 提升层级确保不被遮挡 */
             pointer-events: none;
             display: none;
             overflow: visible;
+            transition: left 0.4s ease-out, top 0.4s ease-out, background-position 0.4s ease-out;
+        }
+
+        /* 跟随鼠标时取消过渡效果 */
+        .magnifier.following {
+            transition: none;
         }
 
         /* 自定义 Slate 浅色十字准星 */
@@ -170,7 +176,7 @@
                     <img src="assets/resume_report.png" alt="简历诊断评分示例" class="w-full rounded-sm shadow-sm">
                     
                     <!-- 动态交互放大镜 (2.5倍放大) -->
-                    <div id="dynamic-magnifier" class="magnifier" style="display: block; background-image: url('assets/resume_report.png'); background-size: 500%;">
+                    <div id="dynamic-magnifier" class="magnifier" style="background-image: url('assets/resume_report.png');">
                     </div>
 
                     <div class="absolute -bottom-4 -left-4 bg-white px-4 py-3 rounded-brand shadow-lg border border-slate-100 flex items-center gap-3 pointer-events-none">
