@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招聘AI助理 | 懂职业更懂人才的 AI 引擎</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // 瑞士平面风配色系统
+                        brand: {
+                            primary: '#111827', // Ink Black (墨黑 - 用于标题/主按钮)
+                            accent: '#EA580C',  // International Orange (国际橙 - 用于图标/强调)
+                            secondary: '#4B5563', // Medium Gray (中灰 - 用于正文)
+                            surface: '#F9FAFB',   // Cool Grey 50 (冷灰 - 用于区块背景)
+                            border: '#E5E7EB',    // Grey 200 (用于边框)
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'brand': '0.25rem', // 4px (锐利微圆角)
+                    },
+                    boxShadow: {
+                        'swiss': '0 1px 2px 0 rgba(0, 0, 0, 0.05)', // 极简微阴影
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 全局排版优化 */
+        body { 
+            font-family: 'Inter', sans-serif;
+            color: #111827;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* 瑞士风卡片：重边框，轻阴影 */
+        .feature-card, .img-container {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.25rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease-out;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: #EA580C; /* 悬停时边框变橙 */
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.1); /* 橙色微光 */
+        }
+
+        /* 强制图标颜色为品牌橙 */
+        [data-lucide] {
+            color: #EA580C;
+        }
+        /* 特殊处理：深色背景下的图标保持浅色/白色 */
+        .bg-slate-900 [data-lucide], .text-white [data-lucide] {
+            color: #FFFFFF; /* 或者保持继承 */
+        }
+        
+        /* 修复优先级：白色/浅色卡片内的图标，即使在深色背景区，也必须是品牌色 */
+        .text-white .feature-card [data-lucide],
+        .text-white .bg-white [data-lucide] {
+            color: #EA580C;
+        }
+
+        /* 特殊处理：导航栏图标保持原色或品牌色 */
+        nav [data-lucide] {
+            color: #EA580C;
+        }
+
+        /* 按钮风格 */
+        button, .btn-primary {
+            letter-spacing: 0.025em; /* 增加字间距 */
+        }
+
+        /* 玻璃放大镜效果 - 尺寸改为原 1.5 倍 (140px * 1.5 = 210px) */
+        .magnifier {
+            position: absolute;
+            width: 210px;
+            height: 210px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.9);
+            background-repeat: no-repeat;
+            box-shadow: 
+                0 20px 40px -10px rgba(0,0,0,0.4),
+                inset 0 0 15px rgba(255,255,255,0.4);
+            z-index: 100; /* 提升层级确保不被遮挡 */
+            pointer-events: none;
+            display: none;
+            overflow: visible;
+        }
+
+        /* 自定义 Slate 浅色十字准星 */
+        .custom-cursor {
+            cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><line x1='12' y1='1' x2='12' y2='23'></line><line x1='1' y1='12' x2='23' y2='12'></line></svg>") 12 12, crosshair;
+        }
+
+        /* 玻璃高光反射层 */
+        .magnifier::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, 
+                rgba(255,255,255,0.4) 0%, 
+                rgba(255,255,255,0) 50%, 
+                rgba(255,255,255,0.1) 100%);
+            z-index: 2;
+        }
+
+        @media (min-width: 768px) {
+            .magnifier { display: block; }
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-900 antialiased">
+
+    <!-- Nav -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-slate-100">
+        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <img src="assets/wulnut_logo.png" alt="招聘AI助理 Logo" class="h-8 rounded-brand">
+                <span class="font-bold text-xl tracking-tight text-brand-primary">招聘AI助理</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-500">
+                <a href="#product" class="hover:text-brand-accent transition">技术演进</a>
+                <a href="#features-showcase" class="hover:text-brand-accent transition">核心技术底座</a>
+                <a href="#enterprise" class="hover:text-brand-accent transition">HR 效能方案</a>
+                <a href="#roi" class="hover:text-brand-accent transition">战略收益</a>
+            </div>
+            <button class="bg-brand-primary text-white px-5 py-2 rounded-brand text-sm font-bold hover:bg-opacity-90 transition">
+                联系我们
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="py-32 bg-white">
+        <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+            <div>
+                <h1 class="text-5xl md:text-7xl font-black leading-tight text-brand-primary mb-8 tracking-tighter">
+                    精准初筛，<br>
+                    让招聘回归<br>
+                    <span class="text-brand-accent">决策本质</span>
+                </h1>
+                <p class="text-xl text-slate-600 mb-10 leading-relaxed max-w-lg">
+                    <strong>招聘AI助理 (Job Copilot)</strong> 深度解析简历背后的履历逻辑。我们通过服务个体的语义引擎，为企业 HR 识别真正匹配的人才，大幅减少无效初筛。
+                </p>
+                <div class="flex gap-4">
+                    <a href="#enterprise" class="bg-brand-accent text-white px-6 py-3 rounded-brand font-bold text-sm shadow-sm hover:opacity-90 transition">
+                        提升招聘效能
+                    </a>
+                </div>
+            </div>
+            <div class="relative">
+                <div id="report-container" class="bg-white p-4 rounded-brand img-container relative overflow-visible custom-cursor">
+                    <img src="assets/resume_report.png" alt="简历诊断评分示例" class="w-full rounded-sm shadow-sm">
+                    
+                    <!-- 动态交互放大镜 (2.5倍放大) -->
+                    <div id="dynamic-magnifier" class="magnifier" style="display: block; background-image: url('assets/resume_report.png'); background-size: 500%;">
+                    </div>
+
+                    <div class="absolute -bottom-4 -left-4 bg-white px-4 py-3 rounded-brand shadow-lg border border-slate-100 flex items-center gap-3 pointer-events-none">
+                        <div class="bg-green-100 p-2 rounded-full"><i data-lucide="check" class="text-green-600 w-4 h-4"></i></div>
+                        <span class="text-xs font-bold text-slate-700 italic">"初筛效率提升 80%"</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NEW SECTION: Strategic Value & ROI (为高层汇报定制) -->
+    <section id="roi" class="py-32 bg-white border-b border-slate-100">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-brand-accent font-bold uppercase tracking-widest text-xs mb-4 block">战略价值仪表盘</span>
+                <h2 class="text-4xl md:text-5xl font-black text-brand-primary mb-6 tracking-tighter">从筛选成本中心，转化为<span class="text-brand-accent">组织动力引擎</span></h2>
+                <p class="text-slate-500 max-w-2xl mx-auto">我们提供的不仅是自动化工具，而是基于“反馈-进化”逻辑的招聘决策中枢</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- KPI 1: Efficiency -->
+                <div class="p-10 flex flex-col h-full bg-slate-100 rounded-brand border-none">
+                    <div class="flex justify-between items-start mb-8 border-b border-slate-200 pb-4">
+                        <div class="w-14 h-14 bg-white rounded-brand flex items-center justify-center shadow-sm">
+                            <i data-lucide="timer" class="text-brand-accent w-7 h-7"></i>
+                        </div>
+                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">核心指标 01</span>
+                    </div>
+                    <h4 class="text-2xl font-black text-brand-primary mb-4 tracking-tight">规模化效率飞跃</h4>
+                    <p class="text-sm text-slate-500 mb-8 leading-relaxed">全量简历分钟级处理，将招聘团队从重复性筛选中彻底解放。</p>
+                    
+                    <div class="mt-auto space-y-5">
+                        <div class="text-sm">
+                            <div class="flex justify-between mb-2"><span class="text-slate-400">传统人工作业</span><span class="font-bold text-slate-400 text-xs">40小时 / 1000份简历</span></div>
+                            <div class="w-full bg-slate-200 h-1 rounded-full"><div class="bg-slate-300 h-full w-full"></div></div>
+                        </div>
+                        <div class="text-sm">
+                            <div class="flex justify-between mb-2 text-brand-primary font-bold"><span>智能体处理</span><span class="font-bold text-brand-accent text-xs">1小时 / 并行吞吐</span></div>
+                            <div class="w-full bg-slate-200 h-1 rounded-full overflow-hidden"><div class="bg-brand-accent h-full w-[10%]"></div></div>
+                        </div>
+                        <div class="pt-4">
+                            <div class="inline-flex items-center justify-center text-xs font-bold text-green-600 bg-white px-3 py-2 rounded-brand border border-green-600 leading-none">
+                                综合提升 60%-90%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI 2: Accuracy Evolution -->
+                <div class="p-10 flex flex-col h-full bg-slate-100 rounded-brand border-none">
+                    <div class="flex justify-between items-start mb-8 border-b border-slate-200 pb-4">
+                        <div class="w-14 h-14 bg-white rounded-brand flex items-center justify-center shadow-sm">
+                            <i data-lucide="refresh-cw" class="text-brand-accent w-7 h-7"></i>
+                        </div>
+                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">核心指标 02</span>
+                    </div>
+                    <h4 class="text-2xl font-black text-brand-primary mb-4 tracking-tight">反馈驱动的精准度</h4>
+                    <p class="text-sm text-slate-500 mb-8 leading-relaxed">建立业务部门与 AI 的实时对齐机制，使筛选标准随使用量持续进化。</p>
+                    
+                    <div class="mt-auto relative pl-6 border-l-2 border-slate-300 space-y-6">
+                        <div class="relative">
+                            <div class="absolute -left-[29px] top-1 w-2.5 h-2.5 rounded-full bg-slate-400 border-2 border-slate-100"></div>
+                            <div class="text-xs font-bold text-slate-400 mb-1 tracking-wider">阶段 一 · 标准对齐</div>
+                            <div class="text-sm text-slate-600">智能体深度解析岗位核心素质项</div>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-brand-accent border-2 border-slate-100"></div>
+                            <div class="text-xs font-bold text-brand-accent mb-1 tracking-wider">阶段 二 · 闭环进化</div>
+                            <div class="text-sm text-brand-primary font-bold leading-relaxed">反馈实时录入 -> 自动优化初筛“口味”</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI 3: Decision Quality -->
+                <div class="p-10 flex flex-col h-full bg-slate-100 rounded-brand border-none">
+                    <div class="flex justify-between items-start mb-8 border-b border-slate-200 pb-4">
+                        <div class="w-14 h-14 bg-white rounded-brand flex items-center justify-center shadow-sm">
+                            <i data-lucide="shield-check" class="text-brand-accent w-7 h-7"></i>
+                        </div>
+                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">核心指标 03</span>
+                    </div>
+                    <h4 class="text-2xl font-black text-brand-primary mb-4 tracking-tight">高价值决策聚焦</h4>
+                    <p class="text-sm text-slate-500 mb-8 leading-relaxed">通过风险预警与深度分析，确保专家精力投入在最终决策而非基础校验。</p>
+                    
+                    <div class="mt-auto space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-brand bg-white flex items-center justify-center shrink-0 shadow-sm"><i data-lucide="alert-triangle" class="w-5 h-5 text-brand-accent"></i></div>
+                            <span class="text-base text-slate-800">简历履历疑点与风险预警</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-brand bg-white flex items-center justify-center shrink-0 shadow-sm"><i data-lucide="file-search" class="w-5 h-5 text-brand-accent"></i></div>
+                            <span class="text-base text-slate-800">针对性面试深度追问建议</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-brand bg-white flex items-center justify-center shrink-0 shadow-sm"><i data-lucide="award" class="w-5 h-5 text-brand-accent"></i></div>
+                            <span class="text-base text-slate-800">核心能力项符合度深度分析</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROI Summary Bar -->
+            <div class="mt-12 bg-brand-primary p-10 rounded-brand text-white flex flex-col md:flex-row justify-between items-center gap-8 border-none shadow-2xl">
+                <div class="flex flex-col gap-2">
+                    <span class="text-slate-400 text-xs font-bold tracking-widest">企业全流程价值汇总</span>
+                    <h3 class="text-3xl font-bold italic leading-none">让招聘提升企业的<span class="text-brand-accent">战略竞争优势</span></h3>
+                </div>
+                <div class="flex gap-16">
+                    <div class="text-center">
+                        <div class="text-4xl font-black text-brand-accent italic tracking-tighter">45%</div>
+                        <div class="text-xs text-slate-400 tracking-widest font-bold">招聘周期缩短</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-black text-white italic tracking-tighter">12.5倍</div>
+                        <div class="text-xs text-slate-400 tracking-widest font-bold">投资回报预估</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Part 1: Evolution from C to B -->
+    <section id="product" class="py-32 border-b border-slate-100">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row gap-16 items-start">
+                <div class="md:w-1/3">
+                    <span class="text-brand-accent font-bold uppercase tracking-widest text-xs mb-6 block">Evolutionary Logic</span>
+                    <h2 class="text-4xl md:text-5xl font-extrabold text-brand-primary mb-8 tracking-tight leading-tight">源于求职逻辑，<br>归于人才<br>识别</h2>
+                    <p class="text-slate-600 text-lg leading-relaxed">
+                        我们从服务求职者理解自身优势出发，沉淀了深度的职场语义引擎。现在，我们将这种“看透简历”的能力赋能给 HR。
+                    </p>
+                </div>
+                <div class="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div class="feature-card p-6 bg-slate-50 border border-slate-100 rounded-brand">
+                        <i data-lucide="shield-check" class="text-brand-accent w-6 h-6 mb-4"></i>
+                        <h4 class="font-bold text-brand-primary mb-2">简历逻辑校验</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed">识别项目描述中的因果关联，自动剔除逻辑不自洽的“注水”简历。</p>
+                    </div>
+                    <div class="feature-card p-6 bg-slate-50 border border-slate-100 rounded-brand">
+                        <i data-lucide="bar-chart-3" class="text-brand-accent w-6 h-6 mb-4"></i>
+                        <h4 class="font-bold text-brand-primary mb-2">多维度量化评分</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed">基于企业 JD 自动生成评分模型，从技能、行业、潜力多维度量化人才价值。</p>
+                    </div>
+                    <div class="feature-card p-6 bg-slate-50 border border-slate-100 rounded-brand">
+                        <i data-lucide="zap" class="text-brand-accent w-6 h-6 mb-4"></i>
+                        <h4 class="font-bold text-brand-primary mb-2">极速自动化初筛</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed">将传统的“逐份精读”转变为“高亮结论速览”，大幅降低 HR 重复性工作量。</p>
+                    </div>
+                    <div class="feature-card p-6 bg-slate-50 border border-slate-100 rounded-brand">
+                        <i data-lucide="search-code" class="text-brand-accent w-6 h-6 mb-4"></i>
+                        <h4 class="font-bold text-brand-primary mb-2">深层能力挖掘</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed">不仅匹配关键词，更通过 AI 追问挖掘候选人隐藏的专业广度与深度。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEW Part: Core Tech Differentiators (4大卖点) -->
+    <section id="features-showcase" class="py-32 bg-black text-white relative overflow-hidden">
+        <!-- 强化“黑夜之光”效果：显著提升亮度(0.5) and 范围(80%)，确保视觉冲击力 -->
+        <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, rgba(0, 0, 0, 1) 80%);"></div>
+        
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-20">
+                <span class="text-brand-accent font-bold uppercase tracking-widest text-xs mb-6 block">Core Intelligence</span>
+                <h2 class="text-5xl md:text-6xl font-black text-white mb-6 tracking-tighter leading-tight">不仅是过滤，<br>更是<span class="text-brand-accent">深度解码</span></h2>
+                <p class="text-slate-400 max-w-2xl mx-auto text-xl italic font-light">
+                    招聘AI助理 重新定义了人岗匹配的颗粒度。
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-20">
+                <!-- Feature 1: 赛道识别 -->
+                <div class="feature-card p-8 bg-white/95 border border-white/10 rounded-brand shadow-2xl backdrop-blur-sm">
+                    <div class="w-12 h-12 bg-brand-soft rounded-brand flex items-center justify-center mb-6">
+                        <i data-lucide="dna" class="w-6 h-6 text-brand-accent"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 mb-1">职业基因解码</h3>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-4">Talent DNA Decoder</div>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        系统内置六大职业底层赛道模型。它能精准识别候选人是适合“外企的标准化流程”还是“创业公司的快速迭代”，实现文化层面的深度匹配。
+                    </p>
+                </div>
+
+                <!-- Feature 2: 全息诊断 -->
+                <div class="feature-card p-8 bg-white/95 border border-white/10 rounded-brand shadow-2xl backdrop-blur-sm">
+                    <div class="w-12 h-12 bg-brand-soft rounded-brand flex items-center justify-center mb-6">
+                        <i data-lucide="scan-face" class="w-6 h-6 text-brand-accent"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 mb-1">全息诊断引擎</h3>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-4">Holographic Diagnosis</div>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        独创的“逻辑+视觉”双重诊断。不仅校验简历内容的因果逻辑（去伪存真），更集成 Vision AI 对职业照进行形象分析，为招聘提供多维度画像。
+                    </p>
+                </div>
+
+                <!-- Feature 3: 动态标准 -->
+                <div class="feature-card p-8 bg-white/95 border border-white/10 rounded-brand shadow-2xl backdrop-blur-sm">
+                    <div class="w-12 h-12 bg-brand-soft rounded-brand flex items-center justify-center mb-6">
+                        <i data-lucide="git-merge" class="w-6 h-6 text-brand-accent"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 mb-1">自适应评分对齐</h3>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-4">Adaptive Calibration</div>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        Agent 会深度阅读您的 JD 描述，反向推导所需的素质模型。零配置上手，自动对齐不同部门、不同背景的筛选标准。
+                    </p>
+                </div>
+
+                <!-- Feature 4: 主动挖掘 -->
+                <div class="feature-card p-8 bg-white/95 border border-white/10 rounded-brand shadow-2xl backdrop-blur-sm">
+                    <div class="w-12 h-12 bg-brand-soft rounded-brand flex items-center justify-center mb-6">
+                        <i data-lucide="message-circle" class="w-6 h-6 text-brand-accent"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 mb-1">主动式信息挖掘</h3>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-4">Active Talent Mining</div>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        不因简历简陋而错过璞玉。当核心信息模糊时，Agent 会主动向候选人发起追问，挖掘出被掩盖的真实能力，提升初筛通过率。
+                    </p>
+                </div>
+            </div>
+
+            <!-- New Section for Visual AI Insight -->
+            <div class="bg-white p-8 md:p-12 rounded-brand img-container">
+                <div class="flex flex-col lg:flex-row gap-12 items-center">
+                    <div class="flex-1 order-2 lg:order-1">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold mb-6">
+                            CASE STUDY: 多维度人才评分
+                        </div>
+                        <h3 class="text-2xl font-bold text-brand-primary mb-6">量化洞察：<br>为每一份简历生成“体检表”</h3>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                            不再纠结于碎片化的标签。招聘AI助理根据企业招聘标准，自动计算匹配得分，并高亮履历中的疑点与亮点，让 HR 的决策有据可依。
+                        </p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-slate-50 rounded-brand border border-slate-100">
+                                <div class="text-brand-accent font-bold text-lg">85%</div>
+                                <div class="text-xs text-slate-400">人工时间节省</div>
+                            </div>
+                            <div class="p-4 bg-slate-50 rounded-brand border border-slate-100">
+                                <div class="text-brand-accent font-bold text-lg">全流程</div>
+                                <div class="text-xs text-slate-400">逻辑推理可溯源</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-1 order-1 lg:order-2 w-full">
+                        <div class="bg-slate-900 p-2 rounded-brand shadow-2xl relative overflow-visible">
+                            <div class="flex items-center gap-1.5 mb-2 px-2 py-1 border-b border-white/5">
+                                <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                                <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                <span class="text-[10px] text-slate-500 font-mono ml-2 tracking-widest">ANALYZING_RESUME_LOGIC...</span>
+                            </div>
+                            <img src="assets/photo_analysis.png" alt="人才多维度评分示例" class="w-full rounded-sm shadow-inner">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Part 2: B2B Services (深色渐变区) -->
+    <section id="enterprise" class="py-32 bg-black text-white border-t border-white/5 relative overflow-hidden">
+        <!-- 强化顶光效果：使用高对比度的冷白/银色光，产生明显的“黑夜一束光”视觉冲击 -->
+        <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(circle at top center, rgba(255, 255, 255, 0.45) 0%, rgba(0, 0, 0, 1) 90%);"></div>
+        
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl md:text-5xl font-extrabold mb-6 italic tracking-tight">HR 效能中心</h2>
+                <p class="text-slate-400 max-w-xl mx-auto text-lg font-light">将深度的 AI 语义洞察，转化为极速的招聘生产力</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Case 1 -->
+                <div class="p-8 border border-white/10 rounded-brand bg-white/5 hover:bg-white/10 transition-all group">
+                    <div class="w-10 h-10 bg-brand-accent/70 rounded-brand flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <i data-lucide="filter" class="text-brand-accent w-5 h-5"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-3">自动化极速初筛</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed">
+                        利用语义逻辑算法自动识别无效简历。系统高亮履历疑点与风险预警，将单份简历初筛时间缩短至分钟级。
+                    </p>
+                </div>
+                <!-- Case 2 -->
+                <div class="p-8 border border-white/10 rounded-brand bg-white/5 hover:bg-white/10 transition-all group">
+                    <div class="w-10 h-10 bg-brand-accent/70 rounded-brand flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <i data-lucide="user-check" class="text-brand-accent w-5 h-5"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-3">决策级面试指引</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed">
+                        基于候选人画像自动生成专属面试提纲，直击核心痛点。让面试官从“找问题”转变为“做决策”，极大降低精力损耗。
+                    </p>
+                </div>
+                <!-- Case 3 -->
+                <div class="p-8 border border-white/10 rounded-brand bg-white/5 hover:bg-white/10 transition-all group">
+                    <div class="w-10 h-10 bg-brand-accent/70 rounded-brand flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <i data-lucide="database" class="text-brand-accent w-5 h-5"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-3">人才标准持续进化</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed">
+                        集成招聘漏斗各环节的反馈闭环。业务部门的真实评价将实时反哺智能体，使筛选准确率随使用量呈螺旋式上升。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Part 3: Tech & Trust (浅灰色区) -->
+    <section id="tech" class="py-24 bg-slate-50 border-y border-slate-100">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-2xl font-black text-brand-primary mb-12 tracking-tight uppercase">工程化标准，保障交付质量</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-swiss flex items-center justify-center mb-4">
+                        <i data-lucide="network" class="text-brand-accent w-6 h-6"></i>
+                    </div>
+                    <div class="text-slate-900 font-bold text-xl mb-1 tracking-tighter">Agentic</div>
+                    <div class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">LangGraph 架构</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-swiss flex items-center justify-center mb-4">
+                        <i data-lucide="box" class="text-brand-accent w-6 h-6"></i>
+                    </div>
+                    <div class="text-slate-900 font-bold text-xl mb-1 tracking-tighter">Docker</div>
+                    <div class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">私有化部署</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-swiss flex items-center justify-center mb-4">
+                        <i data-lucide="check-circle-2" class="text-brand-accent w-6 h-6"></i>
+                    </div>
+                    <div class="text-slate-900 font-bold text-xl mb-1 tracking-tighter">60-90%</div>
+                    <div class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">招聘效率提升</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-swiss flex items-center justify-center mb-4">
+                        <i data-lucide="calendar-clock" class="text-brand-accent w-6 h-6"></i>
+                    </div>
+                    <div class="text-slate-900 font-bold text-xl mb-1 tracking-tighter">极速</div>
+                    <div class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">部署上线周期</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <img src="assets/wulnut_logo.png" alt="招聘AI助理 Logo" class="h-8 grayscale opacity-50">
+                <div class="flex flex-col">
+                    <span class="font-bold text-slate-800 text-sm tracking-tight">招聘AI助理 Job Copilot</span>
+                    <span class="text-[10px] text-slate-400 uppercase tracking-widest">Enterprise Intelligence Team</span>
+                </div>
+            </div>
+            <div class="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <a href="#" class="hover:text-brand-accent transition">Terms</a>
+                <a href="#" class="hover:text-brand-accent transition">Privacy</a>
+                <a href="#" class="hover:text-brand-accent transition">Support</a>
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono">
+                &copy; 2026 DESIGNED FOR HR IMPACT. ALL RIGHTS RESERVED.
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/main.js"></script>
+</body>
+</html>
